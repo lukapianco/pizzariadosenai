@@ -11,6 +11,7 @@ export default function Index() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [showTracker, setShowTracker] = useState(false);
+  const [trackerKey, setTrackerKey] = useState(0);
 
   return (
     <div className="min-h-screen bg-background">
