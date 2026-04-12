@@ -2,7 +2,7 @@ import { useState } from "react";
 import { MessageCircle, LayoutDashboard, Pizza, ClipboardList } from "lucide-react";
 import ChatView, { initialMessages, type Message } from "@/components/ChatView";
 import DashboardView from "@/components/DashboardView";
-import OrderTracker from "@/components/OrderTracker";
+import OrderTracker, { type OrderStatus } from "@/components/OrderTracker";
 import OrdersView from "@/components/OrdersView";
 
 type View = "atendimento" | "gestao" | "pedidos";
@@ -12,6 +12,7 @@ export default function Index() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [showTracker, setShowTracker] = useState(false);
+  const [trackerStatus, setTrackerStatus] = useState<OrderStatus>("Confirmado");
   const [trackerKey, setTrackerKey] = useState(0);
 
   const tabs: { key: View; label: string; icon: React.ElementType }[] = [
@@ -64,8 +65,8 @@ export default function Index() {
             setMessages={setMessages}
             input={input}
             setInput={setInput}
-            onOrderComplete={() => { setShowTracker(true); setTrackerKey(k => k + 1); }}
-            trackerSlot={showTracker ? <OrderTracker key={trackerKey} onDismiss={() => setShowTracker(false)} /> : undefined}
+            onStatusUpdate={(s) => { setTrackerStatus(s as OrderStatus); setShowTracker(true); setTrackerKey(k => k + 1); }}
+            trackerSlot={showTracker ? <OrderTracker key={trackerKey} status={trackerStatus} onDismiss={() => setShowTracker(false)} /> : undefined}
           />
         </div>
         <div style={{ display: view === "gestao" ? "block" : "none" }}>
