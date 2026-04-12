@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-const DASHBOARD_WEBHOOK_URL = "https://hook.us2.make.com/COLE_AQUI_A_URL_DO_NOVO_WEBHOOK_DASHBOARD";
+const DASHBOARD_WEBHOOK_URL = "https://hook.us2.make.com/ufkmwkvjhln3463h968abmisf4hhhuma";
 
 type OrderStatus = "Confirmado" | "Preparando" | "A caminho" | "Entregue";
 
