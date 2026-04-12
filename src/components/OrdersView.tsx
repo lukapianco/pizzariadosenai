@@ -1,36 +1,42 @@
 import { useState, useEffect, useCallback } from "react";
-import { Package, Bike, CheckCircle2, AlertTriangle, RefreshCw, MapPin } from "lucide-react";
+import { Package, Bike, CheckCircle2, AlertTriangle, RefreshCw, MapPin, Clock, ChefHat } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
-const LIST_WEBHOOK_URL = "https://hook.us2.make.com/COLE_AQUI_A_URL_DO_NOVO_WEBHOOK_DE_LISTAGEM";
-const UPDATE_WEBHOOK_URL = "https://hook.us2.make.com/849l4orc8rt4rtpk1ppt4p3sdbpxhswl";
+const DASHBOARD_WEBHOOK_URL = "https://hook.us2.make.com/COLE_AQUI_A_URL_DO_NOVO_WEBHOOK_DASHBOARD";
 
-type OrderStatus = "Preparando" | "A Caminho" | "Entregue";
+type OrderStatus = "Confirmado" | "Preparando" | "A caminho" | "Entregue";
 
 interface Order {
   id: string;
   sabor: string;
-  observacoes: string;
+  obs: string;
   endereco: string;
   status: OrderStatus;
+  data: string;
 }
 
 const STATUS_CONFIG: Record<OrderStatus, { icon: React.ElementType; color: string; bg: string; border: string }> = {
-  "Preparando": {
-    icon: Package,
+  Confirmado: {
+    icon: Clock,
+    color: "text-muted-foreground",
+    bg: "bg-muted/50",
+    border: "border-border",
+  },
+  Preparando: {
+    icon: ChefHat,
     color: "text-amber-600",
     bg: "bg-amber-50",
     border: "border-amber-200",
   },
-  "A Caminho": {
+  "A caminho": {
     icon: Bike,
     color: "text-blue-600",
     bg: "bg-blue-50",
     border: "border-blue-200",
   },
-  "Entregue": {
+  Entregue: {
     icon: CheckCircle2,
     color: "text-emerald-600",
     bg: "bg-emerald-50",
@@ -38,31 +44,35 @@ const STATUS_CONFIG: Record<OrderStatus, { icon: React.ElementType; color: strin
   },
 };
 
-const STATUSES: OrderStatus[] = ["Preparando", "A Caminho", "Entregue"];
-
-const MOCK_ORDERS: Order[] = [
-  { id: "001", sabor: "Calabresa", observacoes: "Sem cebola", endereco: "Rua das Flores, 123", status: "Preparando" },
-  { id: "002", sabor: "Margherita", observacoes: "Borda recheada com catupiry", endereco: "Av. Brasil, 456", status: "Preparando" },
-  { id: "003", sabor: "Pepperoni", observacoes: "", endereco: "Rua Sete de Setembro, 789", status: "A Caminho" },
-  { id: "004", sabor: "Portuguesa", observacoes: "Sem azeitona, extra presunto", endereco: "Rua XV de Novembro, 321", status: "Entregue" },
-  { id: "005", sabor: "Frango c/ Catupiry", observacoes: "Urgente - cliente VIP", endereco: "Rua Augusta, 654", status: "Preparando" },
-];
+const STATUSES: OrderStatus[] = ["Confirmado", "Preparando", "A caminho", "Entregue"];
 
 export default function OrdersView() {
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(LIST_WEBHOOK_URL);
+      const res = await fetch(DASHBOARD_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "listar" }),
+      });
       const data = await res.json();
       if (Array.isArray(data)) {
-        setOrders(data);
+        setOrders(data.map((o: any) => ({
+          id: o.id ?? "",
+          sabor: o.sabor ?? "",
+          obs: o.obs ?? o.observacoes ?? "",
+          endereco: o.endereco ?? "",
+          status: STATUSES.includes(o.status) ? o.status : "Confirmado",
+          data: o.data ?? "",
+        })));
       }
     } catch (err) {
       console.error("Error fetching orders:", err);
+      toast.error("Falha ao carregar pedidos");
     } finally {
       setLoading(false);
     }
@@ -79,29 +89,25 @@ export default function OrdersView() {
     setOrders((o) => o.map((x) => (x.id === order.id ? { ...x, status: newStatus } : x)));
 
     try {
-      await fetch(UPDATE_WEBHOOK_URL, {
+      await fetch(DASHBOARD_WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mensagem: `Atualizar pedido #${order.id} para status: ${newStatus}`,
-          acao: "atualizar_status",
-          pedido_id: order.id,
-          novo_status: newStatus,
-        }),
+        body: JSON.stringify({ acao: "atualizar", id: order.id, novo_status: newStatus }),
       });
-      toast({ title: `Pedido #${order.id}`, description: `Status alterado para "${newStatus}"` });
+      toast.success(`Pedido #${order.id} → ${newStatus}`);
     } catch {
       setOrders(prev);
-      toast({ title: "Erro", description: "Falha ao atualizar status", variant: "destructive" });
+      toast.error("Falha ao atualizar status");
     } finally {
       setUpdatingId(null);
     }
   };
 
   const grouped: Record<OrderStatus, Order[]> = {
-    "Preparando": orders.filter((o) => o.status === "Preparando"),
-    "A Caminho": orders.filter((o) => o.status === "A Caminho"),
-    "Entregue": orders.filter((o) => o.status === "Entregue"),
+    Confirmado: orders.filter((o) => o.status === "Confirmado"),
+    Preparando: orders.filter((o) => o.status === "Preparando"),
+    "A caminho": orders.filter((o) => o.status === "A caminho"),
+    Entregue: orders.filter((o) => o.status === "Entregue"),
   };
 
   return (
@@ -121,7 +127,7 @@ export default function OrdersView() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {STATUSES.map((status) => {
           const config = STATUS_CONFIG[status];
           const Icon = config.icon;
@@ -156,10 +162,10 @@ export default function OrdersView() {
                       </Badge>
                     </div>
 
-                    {order.observacoes && (
-                      <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
-                        <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
-                        <p className="text-xs font-semibold text-destructive">{order.observacoes}</p>
+                    {order.obs && (
+                      <div className="flex items-start gap-2 bg-amber-50 border border-amber-300 rounded-lg px-3 py-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs font-bold text-amber-800">{order.obs}</p>
                       </div>
                     )}
 
@@ -168,8 +174,12 @@ export default function OrdersView() {
                       <p className="text-xs">{order.endereco}</p>
                     </div>
 
+                    {order.data && (
+                      <p className="text-[10px] text-muted-foreground">{order.data}</p>
+                    )}
+
                     {status !== "Entregue" && (
-                      <div className="flex gap-1.5 pt-1">
+                      <div className="flex flex-wrap gap-1.5 pt-1">
                         {STATUSES.filter((s) => s !== order.status).map((s) => {
                           const sc = STATUS_CONFIG[s];
                           const SIcon = sc.icon;
