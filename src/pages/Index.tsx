@@ -56,13 +56,13 @@ export default function Index() {
       {/* Content */}
       <main className="pt-4">
         <div style={{ display: view === "atendimento" ? "block" : "none" }}>
-          {showTracker && <OrderTracker onDismiss={() => setShowTracker(false)} />}
           <ChatView
             messages={messages}
             setMessages={setMessages}
             input={input}
             setInput={setInput}
             onOrderComplete={() => setShowTracker(true)}
+            trackerSlot={showTracker ? <OrderTracker onDismiss={() => setShowTracker(false)} /> : undefined}
           />
         </div>
         <div style={{ display: view === "gestao" ? "block" : "none" }}>
