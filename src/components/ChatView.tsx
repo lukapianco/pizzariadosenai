@@ -3,24 +3,29 @@ import { Send, Bot, User } from "lucide-react";
 
 const WEBHOOK_URL = "https://hook.us2.make.com/849l4orc8rt4rtpk1ppt4p3sdbpxhswl";
 
-interface Message {
+export interface Message {
   id: number;
   role: "user" | "assistant";
   content: string;
 }
 
-const initialMessages: Message[] = [
+export const initialMessages: Message[] = [
   {
     id: 1,
     role: "assistant",
-    content:
-      "Olá! 🍕 Sou o assistente virtual da pizzaria. Como posso ajudar no seu pedido ou gestão hoje?",
+    content: "Olá! 🍕 Sou o assistente virtual da pizzaria. Como posso ajudar no seu pedido ou gestão hoje?",
   },
 ];
 
-export default function ChatView() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [input, setInput] = useState("");
+interface ChatViewProps {
+  messages: Message[];
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  input: string;
+  setInput: React.Dispatch<React.SetStateAction<string>>;
+  onOrderComplete?: () => void;
+}
+
+export default function ChatView({ messages, setMessages, input, setInput, onOrderComplete }: ChatViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -45,17 +50,16 @@ export default function ChatView() {
       });
 
       let reply: string;
-      const contentType = res.headers.get("content-type") || "";
+      const raw = await res.text();
 
-      if (contentType.includes("application/json")) {
-        const data = await res.json();
-        // Try common response shapes
-        reply =
-          typeof data === "string"
-            ? data
-            : data.resposta || data.reply || data.message || data.text || JSON.stringify(data);
-      } else {
-        reply = await res.text();
+      try {
+        const data = JSON.parse(raw);
+        if (data.pedido_completo === true && onOrderComplete) {
+          onOrderComplete();
+        }
+        reply = data.resposta_chat || data.resposta || data.reply || data.message || data.text || raw;
+      } catch {
+        reply = raw;
       }
 
       setMessages((prev) => [
@@ -79,7 +83,6 @@ export default function ChatView() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-5rem)] max-w-3xl mx-auto">
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg) => (
           <div
@@ -93,11 +96,7 @@ export default function ChatView() {
                   : "bg-secondary text-secondary-foreground"
               }`}
             >
-              {msg.role === "assistant" ? (
-                <Bot className="w-4 h-4" />
-              ) : (
-                <User className="w-4 h-4" />
-              )}
+              {msg.role === "assistant" ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
             </div>
             <div
               className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
@@ -138,7 +137,6 @@ export default function ChatView() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
       <div className="border-t border-border bg-card p-4">
         <form
           onSubmit={(e) => {
