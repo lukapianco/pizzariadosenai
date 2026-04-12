@@ -55,19 +55,22 @@ export default function Index() {
       }
     };
 
-    intervalRef.current = setInterval(poll, 20000);
+    poll();
+    intervalRef.current = setInterval(poll, 15000);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [trackedOrderId, trackerStatus]);
 
   const handleStatusUpdate = (status: string, orderId?: string) => {
-    setTrackerStatus(status as OrderStatus);
-    setShowTracker(true);
-    setTrackerKey((k) => k + 1);
-    if (orderId) {
+    if (orderId && orderId !== "" && orderId !== "null") {
       setTrackedOrderId(orderId);
     }
+    if (status && status !== "null") {
+      setTrackerStatus(status as OrderStatus);
+    }
+    setShowTracker(true);
+    setTrackerKey((k) => k + 1);
   };
 
   const tabs: { key: View; label: string; icon: React.ElementType }[] = [

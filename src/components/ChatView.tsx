@@ -66,11 +66,13 @@ export default function ChatView({ messages, setMessages, input, setInput, onSta
 
       try {
         const data = JSON.parse(raw);
-        const statusAtual = data.status_atual && data.status_atual !== "null" ? data.status_atual : null;
-        const idPedido = data.id_pedido && data.id_pedido !== "" ? data.id_pedido : null;
+        const statusAtual = data.status_atual && data.status_atual !== "null" && data.status_atual !== "" ? data.status_atual : null;
+        const idPedido = data.id_pedido && data.id_pedido !== "" && data.id_pedido !== "null" ? data.id_pedido : null;
 
-        if (statusAtual && onStatusUpdate) {
-          onStatusUpdate(statusAtual, idPedido || undefined);
+        if (idPedido && onStatusUpdate) {
+          onStatusUpdate(statusAtual || "Confirmado", idPedido);
+        } else if (statusAtual && onStatusUpdate) {
+          onStatusUpdate(statusAtual);
         } else if (data.pedido_completo === true && onStatusUpdate) {
           onStatusUpdate("Confirmado", idPedido || undefined);
         }
