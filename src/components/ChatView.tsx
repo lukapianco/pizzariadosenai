@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User } from "lucide-react";
 
+const WEBHOOK_URL = "COLE_AQUI_A_URL_DO_SEU_WEBHOOK_DO_MAKE";
+
 interface Message {
   id: number;
   role: "user" | "assistant";
@@ -13,17 +15,6 @@ const initialMessages: Message[] = [
     role: "assistant",
     content:
       "Olá! 🍕 Sou o assistente virtual da pizzaria. Como posso ajudar no seu pedido ou gestão hoje?",
-  },
-  {
-    id: 2,
-    role: "user",
-    content: "Quais sabores estão disponíveis hoje?",
-  },
-  {
-    id: 3,
-    role: "assistant",
-    content:
-      "Temos as seguintes opções hoje:\n\n- 🍕 **Calabresa** — R$39,90\n- 🍕 **Margherita** — R$35,90\n- 🍕 **Pepperoni** — R$42,90\n- 🍕 **Quatro Queijos** — R$44,90\n\nGostaria de fazer um pedido?",
   },
 ];
 
@@ -46,20 +37,44 @@ export default function ChatView() {
     setInput("");
     setIsLoading(true);
 
-    // TODO: Replace with actual API/webhook call
-    // const response = await fetch("/api/chat", { method: "POST", body: JSON.stringify({ messages: [...messages, userMsg] }) });
-    setTimeout(() => {
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mensagem: text }),
+      });
+
+      let reply: string;
+      const contentType = res.headers.get("content-type") || "";
+
+      if (contentType.includes("application/json")) {
+        const data = await res.json();
+        // Try common response shapes
+        reply =
+          typeof data === "string"
+            ? data
+            : data.resposta || data.reply || data.message || data.text || JSON.stringify(data);
+      } else {
+        reply = await res.text();
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, role: "assistant", content: reply },
+      ]);
+    } catch (err) {
+      console.error("Webhook error:", err);
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now() + 1,
           role: "assistant",
-          content:
-            "Certo! Vou anotar seu pedido. Mais alguma coisa que eu possa ajudar? 😊",
+          content: "Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.",
         },
       ]);
+    } finally {
       setIsLoading(false);
-    }, 1200);
+    }
   };
 
   return (
