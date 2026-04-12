@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User } from "lucide-react";
 
-const WEBHOOK_URL = "COLE_AQUI_A_URL_DO_SEU_WEBHOOK_DO_MAKE";
+const WEBHOOK_URL = "https://hook.us2.make.com/849l4orc8rt4rtpk1ppt4p3sdbpxhswl";
 
 interface Message {
   id: number;
