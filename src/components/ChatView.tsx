@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User } from "lucide-react";
 
 const WEBHOOK_URL = "https://hook.us2.make.com/849l4orc8rt4rtpk1ppt4p3sdbpxhswl";
@@ -13,8 +13,7 @@ export const initialMessages: Message[] = [
   {
     id: 1,
     role: "assistant",
-    content:
-      "Olá! 🍕 Sou o assistente virtual da pizzaria. Como posso ajudar no seu pedido ou gestão hoje?",
+    content: "Olá! 🍕 Sou o assistente virtual da pizzaria. Como posso ajudar no seu pedido ou gestão hoje?",
   },
 ];
 
@@ -27,26 +26,6 @@ interface ChatViewProps {
 }
 
 export default function ChatView({ messages, setMessages, input, setInput, onOrderComplete }: ChatViewProps) {
-  const isLoadingRef = useRef(false);
-  const [isLoading, setIsLoadingState] = [
-    // We need local isLoading for UI but also track via ref for async
-    useRef(false).current,
-    undefined,
-  ];
-  // Simpler approach: use local state for loading
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const loadingRef = useRef(false);
-  const [, forceUpdate] = useEffect as any; // won't work, let's use a proper approach
-
-  // Let me just use a simple approach with a state-like ref + forceUpdate
-  return <ChatViewInner messages={messages} setMessages={setMessages} input={input} setInput={setInput} onOrderComplete={onOrderComplete} />;
-}
-
-// Actually, let me rewrite this cleanly:
-
-import { useState } from "react";
-
-function ChatViewInner({ messages, setMessages, input, setInput, onOrderComplete }: ChatViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -73,17 +52,13 @@ function ChatViewInner({ messages, setMessages, input, setInput, onOrderComplete
       let reply: string;
       const raw = await res.text();
 
-      // Try to parse as JSON to extract resposta_chat
       try {
         const data = JSON.parse(raw);
-        // Check for pedido_completo flag
         if (data.pedido_completo === true && onOrderComplete) {
           onOrderComplete();
         }
-        // Extract the chat reply
         reply = data.resposta_chat || data.resposta || data.reply || data.message || data.text || raw;
       } catch {
-        // Not JSON, use raw text
         reply = raw;
       }
 
@@ -108,7 +83,6 @@ function ChatViewInner({ messages, setMessages, input, setInput, onOrderComplete
 
   return (
     <div className="flex flex-col h-[calc(100vh-5rem)] max-w-3xl mx-auto">
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg) => (
           <div
@@ -122,11 +96,7 @@ function ChatViewInner({ messages, setMessages, input, setInput, onOrderComplete
                   : "bg-secondary text-secondary-foreground"
               }`}
             >
-              {msg.role === "assistant" ? (
-                <Bot className="w-4 h-4" />
-              ) : (
-                <User className="w-4 h-4" />
-              )}
+              {msg.role === "assistant" ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
             </div>
             <div
               className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
@@ -167,7 +137,6 @@ function ChatViewInner({ messages, setMessages, input, setInput, onOrderComplete
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
       <div className="border-t border-border bg-card p-4">
         <form
           onSubmit={(e) => {

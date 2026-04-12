@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { MessageCircle, LayoutDashboard, Pizza } from "lucide-react";
-import ChatView from "@/components/ChatView";
+import ChatView, { initialMessages, type Message } from "@/components/ChatView";
 import DashboardView from "@/components/DashboardView";
+import OrderTracker from "@/components/OrderTracker";
 
 type View = "atendimento" | "gestao";
 
 export default function Index() {
   const [view, setView] = useState<View>("atendimento");
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [input, setInput] = useState("");
+  const [showTracker, setShowTracker] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -22,7 +26,6 @@ export default function Index() {
             </span>
           </div>
 
-          {/* Toggle */}
           <div className="flex bg-muted rounded-xl p-1 gap-1">
             <button
               onClick={() => setView("atendimento")}
@@ -52,7 +55,19 @@ export default function Index() {
 
       {/* Content */}
       <main className="pt-4">
-        {view === "atendimento" ? <ChatView /> : <DashboardView />}
+        <div style={{ display: view === "atendimento" ? "block" : "none" }}>
+          {showTracker && <OrderTracker onDismiss={() => setShowTracker(false)} />}
+          <ChatView
+            messages={messages}
+            setMessages={setMessages}
+            input={input}
+            setInput={setInput}
+            onOrderComplete={() => setShowTracker(true)}
+          />
+        </div>
+        <div style={{ display: view === "gestao" ? "block" : "none" }}>
+          <DashboardView />
+        </div>
       </main>
     </div>
   );
