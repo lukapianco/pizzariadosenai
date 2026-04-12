@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MessageCircle, LayoutDashboard, Pizza, ClipboardList } from "lucide-react";
 import ChatView, { initialMessages, type Message } from "@/components/ChatView";
 import DashboardView from "@/components/DashboardView";
 import OrderTracker, { type OrderStatus } from "@/components/OrderTracker";
 import OrdersView from "@/components/OrdersView";
+
+const DASHBOARD_WEBHOOK_URL = "https://hook.us2.make.com/ufkmwkvjhln3463h968abmisf4hhhuma";
 
 type View = "atendimento" | "gestao" | "pedidos";
 
@@ -14,6 +16,59 @@ export default function Index() {
   const [showTracker, setShowTracker] = useState(false);
   const [trackerStatus, setTrackerStatus] = useState<OrderStatus>("Confirmado");
   const [trackerKey, setTrackerKey] = useState(0);
+  const [trackedOrderId, setTrackedOrderId] = useState<string | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Polling for order status updates every 20s
+  useEffect(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    if (!trackedOrderId || trackerStatus === "Entregue") return;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(DASHBOARD_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ acao: "listar" }),
+        });
+        const orders = await res.json();
+        if (Array.isArray(orders)) {
+          const matched = orders.find((o: any) => o.id === trackedOrderId);
+          if (matched?.status) {
+            const newStatus = matched.status as OrderStatus;
+            if (newStatus !== trackerStatus) {
+              setTrackerStatus(newStatus);
+              setTrackerKey((k) => k + 1);
+              if (newStatus === "Entregue" && intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+    };
+
+    intervalRef.current = setInterval(poll, 20000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [trackedOrderId, trackerStatus]);
+
+  const handleStatusUpdate = (status: string, orderId?: string) => {
+    setTrackerStatus(status as OrderStatus);
+    setShowTracker(true);
+    setTrackerKey((k) => k + 1);
+    if (orderId) {
+      setTrackedOrderId(orderId);
+    }
+  };
 
   const tabs: { key: View; label: string; icon: React.ElementType }[] = [
     { key: "atendimento", label: "Atendimento", icon: MessageCircle },
@@ -65,7 +120,7 @@ export default function Index() {
             setMessages={setMessages}
             input={input}
             setInput={setInput}
-            onStatusUpdate={(s) => { setTrackerStatus(s as OrderStatus); setShowTracker(true); setTrackerKey(k => k + 1); }}
+            onStatusUpdate={handleStatusUpdate}
             trackerSlot={showTracker ? <OrderTracker key={trackerKey} status={trackerStatus} onDismiss={() => setShowTracker(false)} /> : undefined}
           />
         </div>
