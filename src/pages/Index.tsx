@@ -62,8 +62,8 @@ export default function Index() {
             setMessages={setMessages}
             input={input}
             setInput={setInput}
-            onOrderComplete={() => setShowTracker(true)}
-            trackerSlot={showTracker ? <OrderTracker onDismiss={() => setShowTracker(false)} /> : undefined}
+            onOrderComplete={() => { setShowTracker(true); setTrackerKey(k => k + 1); }}
+            trackerSlot={showTracker ? <OrderTracker key={trackerKey} onDismiss={() => setShowTracker(false)} /> : undefined}
           />
         </div>
         <div style={{ display: view === "gestao" ? "block" : "none" }}>
