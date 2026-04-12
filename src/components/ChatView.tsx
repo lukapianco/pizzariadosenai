@@ -29,11 +29,11 @@ interface ChatViewProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   input: string;
   setInput: React.Dispatch<React.SetStateAction<string>>;
-  onOrderComplete?: () => void;
+  onStatusUpdate?: (status: string) => void;
   trackerSlot?: React.ReactNode;
 }
 
-export default function ChatView({ messages, setMessages, input, setInput, onOrderComplete, trackerSlot }: ChatViewProps) {
+export default function ChatView({ messages, setMessages, input, setInput, onStatusUpdate, trackerSlot }: ChatViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -66,8 +66,10 @@ export default function ChatView({ messages, setMessages, input, setInput, onOrd
 
       try {
         const data = JSON.parse(raw);
-        if (data.pedido_completo === true && onOrderComplete) {
-          onOrderComplete();
+        if (data.status_atual && onStatusUpdate) {
+          onStatusUpdate(data.status_atual);
+        } else if (data.pedido_completo === true && onStatusUpdate) {
+          onStatusUpdate("Confirmado");
         }
         if (data.acao === "atualizar" && data.pedido_id) {
           reply = `✅ Pedido #${data.pedido_id} alterado com sucesso!`;
