@@ -10,8 +10,8 @@ interface OrderTrackerProps {
 
 const statusConfig: Record<OrderStatus, { icon: typeof CookingPot; label: string; progress: number }> = {
   Confirmado: { icon: ClipboardCheck, label: "Pedido confirmado", progress: 15 },
-  Preparando: { icon: CookingPot, label: "Pedido sendo preparado", progress: 40 },
-  "A caminho": { icon: Bike, label: "Saiu para entrega", progress: 75 },
+  Preparando: { icon: CookingPot, label: "Pedido sendo preparado", progress: 50 },
+  "A caminho": { icon: Bike, label: "Saiu para entrega", progress: 80 },
   Entregue: { icon: Check, label: "Pedido entregue!", progress: 100 },
 };
 
