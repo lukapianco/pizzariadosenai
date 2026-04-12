@@ -29,7 +29,7 @@ interface ChatViewProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   input: string;
   setInput: React.Dispatch<React.SetStateAction<string>>;
-  onStatusUpdate?: (status: string) => void;
+  onStatusUpdate?: (status: string, orderId?: string) => void;
   trackerSlot?: React.ReactNode;
 }
 
