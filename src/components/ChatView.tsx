@@ -17,15 +17,23 @@ export const initialMessages: Message[] = [
   },
 ];
 
+function buildHistorico(messages: Message[]): string {
+  return messages
+    .slice(-6)
+    .map((m) => (m.role === "user" ? `User: ${m.content}` : `AI: ${m.content}`))
+    .join("\n");
+}
+
 interface ChatViewProps {
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   input: string;
   setInput: React.Dispatch<React.SetStateAction<string>>;
   onOrderComplete?: () => void;
+  trackerSlot?: React.ReactNode;
 }
 
-export default function ChatView({ messages, setMessages, input, setInput, onOrderComplete }: ChatViewProps) {
+export default function ChatView({ messages, setMessages, input, setInput, onOrderComplete, trackerSlot }: ChatViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +46,8 @@ export default function ChatView({ messages, setMessages, input, setInput, onOrd
     if (!text || isLoading) return;
 
     const userMsg: Message = { id: Date.now(), role: "user", content: text };
-    setMessages((prev) => [...prev, userMsg]);
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
 
@@ -46,7 +55,10 @@ export default function ChatView({ messages, setMessages, input, setInput, onOrd
       const res = await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mensagem: text }),
+        body: JSON.stringify({
+          mensagem: text,
+          historico: buildHistorico(updatedMessages.slice(-6)),
+        }),
       });
 
       let reply: string;
@@ -82,7 +94,15 @@ export default function ChatView({ messages, setMessages, input, setInput, onOrd
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5rem)] max-w-3xl mx-auto">
+    <div className="flex flex-col h-[calc(100vh-4rem)] max-w-3xl mx-auto relative">
+      {/* Sticky tracker at top */}
+      {trackerSlot && (
+        <div className="sticky top-0 z-20 bg-background pb-1">
+          {trackerSlot}
+        </div>
+      )}
+
+      {/* Scrollable messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg) => (
           <div
@@ -137,7 +157,8 @@ export default function ChatView({ messages, setMessages, input, setInput, onOrd
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t border-border bg-card p-4">
+      {/* Sticky input at bottom */}
+      <div className="sticky bottom-0 z-20 border-t border-border bg-card p-4">
         <form
           onSubmit={(e) => {
             e.preventDefault();
