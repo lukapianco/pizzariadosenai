@@ -69,7 +69,11 @@ export default function ChatView({ messages, setMessages, input, setInput, onOrd
         if (data.pedido_completo === true && onOrderComplete) {
           onOrderComplete();
         }
-        reply = data.resposta_chat || data.resposta || data.reply || data.message || data.text || raw;
+        if (data.acao === "atualizar" && data.pedido_id) {
+          reply = `✅ Pedido #${data.pedido_id} alterado com sucesso!`;
+        } else {
+          reply = data.resposta_chat || data.resposta || data.reply || data.message || data.text || raw;
+        }
       } catch {
         reply = raw;
       }
