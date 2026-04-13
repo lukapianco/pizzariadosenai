@@ -14,39 +14,68 @@ export default function Index() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [showTracker, setShowTracker] = useState(false);
-  const [trackerStatus, setTrackerStatus] = useState<OrderStatus>("Confirmado");
+  const [trackedOrderStatus, setTrackedOrderStatus] = useState<OrderStatus>("Confirmado");
   const [trackerKey, setTrackerKey] = useState(0);
   const [trackedOrderId, setTrackedOrderId] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const trackedOrderIdRef = useRef<string | null>(null);
+  const trackedOrderStatusRef = useRef<OrderStatus>("Confirmado");
 
-  // Polling for order status updates every 20s
+  useEffect(() => {
+    trackedOrderIdRef.current = trackedOrderId ? trackedOrderId.trim() : null;
+  }, [trackedOrderId]);
+
+  useEffect(() => {
+    trackedOrderStatusRef.current = trackedOrderStatus;
+
+    if (trackedOrderStatus === "Entregue" && intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, [trackedOrderStatus]);
+
   useEffect(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
 
-    if (!trackedOrderId || trackerStatus === "Entregue") return;
+    if (!trackedOrderId) return;
+
+    console.log("Starting Tracker for ID:", trackedOrderId);
 
     const poll = async () => {
+      const currentTrackedOrderId = trackedOrderIdRef.current;
+      if (!currentTrackedOrderId) return;
+
+      console.log("Polling triggered for ID:", currentTrackedOrderId);
+
       try {
         const res = await fetch(DASHBOARD_WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ acao: "listar" }),
         });
-        const orders = await res.json();
-        if (Array.isArray(orders)) {
-          const matched = orders.find((o: any) => o.id === trackedOrderId);
+        const responseData = await res.json();
+
+        console.log("Polling Response:", responseData);
+
+        if (Array.isArray(responseData)) {
+          const matched = responseData.find(
+            (order: any) => String(order?.id ?? "").trim() === currentTrackedOrderId
+          );
+
           if (matched?.status) {
             const newStatus = matched.status as OrderStatus;
-            if (newStatus !== trackerStatus) {
-              setTrackerStatus(newStatus);
+            if (newStatus !== trackedOrderStatusRef.current) {
+              trackedOrderStatusRef.current = newStatus;
+              setTrackedOrderStatus(newStatus);
               setTrackerKey((k) => k + 1);
-              if (newStatus === "Entregue" && intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-              }
+            }
+
+            if (newStatus === "Entregue" && intervalRef.current) {
+              clearInterval(intervalRef.current);
+              intervalRef.current = null;
             }
           }
         }
@@ -57,19 +86,30 @@ export default function Index() {
 
     poll();
     intervalRef.current = setInterval(poll, 15000);
+
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
-  }, [trackedOrderId, trackerStatus]);
+  }, [trackedOrderId]);
 
   const handleStatusUpdate = (status: string, orderId?: string) => {
-    if (orderId && orderId !== "" && orderId !== "null") {
-      setTrackedOrderId(orderId);
+    const normalizedOrderId = orderId?.trim();
+    const normalizedStatus = status?.trim();
+
+    if (normalizedOrderId && normalizedOrderId !== "null") {
+      setTrackedOrderId(normalizedOrderId);
+      setShowTracker(true);
     }
-    if (status && status !== "null") {
-      setTrackerStatus(status as OrderStatus);
+
+    if (normalizedStatus && normalizedStatus !== "null") {
+      trackedOrderStatusRef.current = normalizedStatus as OrderStatus;
+      setTrackedOrderStatus(normalizedStatus as OrderStatus);
+      setShowTracker(true);
     }
-    setShowTracker(true);
+
     setTrackerKey((k) => k + 1);
   };
 
@@ -124,7 +164,7 @@ export default function Index() {
             input={input}
             setInput={setInput}
             onStatusUpdate={handleStatusUpdate}
-            trackerSlot={showTracker ? <OrderTracker key={trackerKey} status={trackerStatus} onDismiss={() => setShowTracker(false)} /> : undefined}
+            trackerSlot={showTracker ? <OrderTracker key={trackerKey} status={trackedOrderStatus} onDismiss={() => setShowTracker(false)} /> : undefined}
           />
         </div>
         <div style={{ display: view === "gestao" ? "block" : "none" }}>
