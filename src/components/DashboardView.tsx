@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -16,6 +17,7 @@ import {
   ShoppingCart,
   Receipt,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const kpis = [
   { label: "Lucro Bruto", value: "R$ 18.450", icon: DollarSign, change: "+12%" },
@@ -50,15 +52,84 @@ const orders = [
   { id: 5, customer: "Pedro Alves", value: "R$ 62,80", status: "Entregue" },
 ];
 
-export default function DashboardView() {
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
   return (
-    <div className="max-w-7xl mx-auto p-4 space-y-6">
+    <div className="bg-card border border-border rounded-xl px-4 py-3 shadow-lg text-sm">
+      <p className="font-semibold text-foreground mb-1">{label}</p>
+      {payload.map((entry: any, i: number) => (
+        <p key={i} className="text-xs" style={{ color: entry.color }}>
+          {entry.name}: <span className="font-bold">{entry.value}</span>
+        </p>
+      ))}
+    </div>
+  );
+};
+
+function KpiSkeleton() {
+  return (
+    <div className="bg-card border border-border rounded-xl p-5 shadow-sm flex items-start gap-4">
+      <Skeleton className="w-10 h-10 rounded-lg" />
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-6 w-28" />
+        <Skeleton className="h-3 w-12" />
+      </div>
+    </div>
+  );
+}
+
+function ChartSkeleton() {
+  return (
+    <div className="bg-card border border-border rounded-xl p-5 shadow-sm space-y-4">
+      <Skeleton className="h-4 w-40" />
+      <div className="flex items-end gap-3 h-[240px] pt-4">
+        {[60, 80, 45, 90, 70].map((h, i) => (
+          <Skeleton key={i} className="flex-1 rounded-md" style={{ height: `${h}%` }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function DashboardView() {
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoaded(true), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!loaded) {
+    return (
+      <div className="max-w-7xl mx-auto p-4 space-y-6 animate-fade-in">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => <KpiSkeleton key={i} />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <ChartSkeleton />
+          <ChartSkeleton />
+        </div>
+        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-border">
+            <Skeleton className="h-4 w-32" />
+          </div>
+          <div className="p-5 space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-10 w-full rounded-md" />)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto p-4 space-y-6 animate-fade-in">
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((kpi) => (
           <div
             key={kpi.label}
-            className="bg-card border border-border rounded-xl p-5 shadow-sm flex items-start gap-4"
+            className="bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex items-start gap-4"
           >
             <div className="rounded-lg bg-primary/10 p-2.5">
               <kpi.icon className="w-5 h-5 text-primary" />
@@ -74,43 +145,27 @@ export default function DashboardView() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Bar chart */}
-        <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+        <div className="bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-sm font-semibold text-foreground mb-4">Pizzas mais vendidas</h3>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={pizzaData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
               <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "0.5rem",
-                  fontSize: 12,
-                }}
-              />
+              <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="vendas" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Line chart */}
-        <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+        <div className="bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-sm font-semibold text-foreground mb-4">Receita vs Gastos</h3>
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={revenueData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="dia" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
               <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "0.5rem",
-                  fontSize: 12,
-                }}
-              />
+              <Tooltip content={<CustomTooltip />} />
               <Legend />
               <Line type="monotone" dataKey="receita" stroke="hsl(var(--chart-4))" strokeWidth={2} dot={{ r: 4 }} />
               <Line type="monotone" dataKey="gastos" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{ r: 4 }} />
