@@ -127,7 +127,7 @@ export default function OrdersView() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {STATUSES.map((status) => {
           const config = STATUS_CONFIG[status];
           const Icon = config.icon;

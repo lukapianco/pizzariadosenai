@@ -20,7 +20,7 @@ export default function OrderTracker({ status, onDismiss }: OrderTrackerProps) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 pt-3 animate-fade-in">
-      <div className="relative overflow-hidden rounded-2xl bg-[hsl(222,47%,11%)] text-white p-5 shadow-lg shadow-primary/20 border border-white/10">
+      <div className="relative overflow-hidden rounded-2xl bg-[hsl(222,47%,11%)] text-white p-5 shadow-lg shadow-primary/20 border border-white/10 transition-all duration-500 ease-in-out">
         <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
 
         <div className="flex items-center gap-4 mb-4">
@@ -44,10 +44,10 @@ export default function OrderTracker({ status, onDismiss }: OrderTrackerProps) {
         />
 
         <div className="flex justify-between mt-2 text-[11px] text-white/40 font-medium">
-          <span className={status === "Confirmado" ? "text-white/90" : ""}>Confirmado</span>
-          <span className={status === "Preparando" ? "text-white/90" : ""}>Preparando</span>
-          <span className={status === "A caminho" ? "text-white/90" : ""}>A caminho</span>
-          <span className={status === "Entregue" ? "text-white/90" : ""}>Entregue</span>
+          <span className={status === "Confirmado" ? "text-white/90 transition-colors duration-500" : "transition-colors duration-500"}>Confirmado</span>
+          <span className={status === "Preparando" ? "text-white/90 transition-colors duration-500" : "transition-colors duration-500"}>Preparando</span>
+          <span className={status === "A caminho" ? "text-white/90 transition-colors duration-500" : "transition-colors duration-500"}>A caminho</span>
+          <span className={status === "Entregue" ? "text-white/90 transition-colors duration-500" : "transition-colors duration-500"}>Entregue</span>
         </div>
       </div>
     </div>
