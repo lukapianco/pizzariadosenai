@@ -114,7 +114,7 @@ export default function ChatView({ messages, setMessages, input, setInput, onSta
       )}
 
       {/* Scrollable messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 pb-24 md:pb-20 space-y-4">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -168,14 +168,14 @@ export default function ChatView({ messages, setMessages, input, setInput, onSta
         <div ref={bottomRef} />
       </div>
 
-      {/* Sticky input at bottom */}
-      <div className="sticky bottom-0 z-20 border-t border-border bg-card p-4">
+      {/* Fixed input at bottom */}
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-30 border-t border-border bg-card p-4">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSend();
           }}
-          className="flex gap-2"
+          className="flex gap-2 max-w-3xl mx-auto"
         >
           <input
             value={input}
