@@ -120,10 +120,10 @@ export default function Index() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
               <Pizza className="w-5 h-5 text-primary-foreground" />
@@ -133,7 +133,8 @@ export default function Index() {
             </span>
           </div>
 
-          <div className="flex bg-muted rounded-xl p-1 gap-1">
+          {/* Desktop tabs */}
+          <div className="hidden md:flex bg-muted rounded-xl p-1 gap-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -174,6 +175,30 @@ export default function Index() {
           <OrdersView />
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/95 backdrop-blur-md border-t border-border">
+        <div className="flex items-center justify-around h-16">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = view === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setView(tab.key)}
+                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors ${
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                }`}
+              >
+                <Icon className={`w-5 h-5 ${isActive ? "text-primary" : ""}`} />
+                <span className="text-[10px] font-semibold">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
