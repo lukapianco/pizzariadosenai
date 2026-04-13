@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User } from "lucide-react";
+import { Send, Bot, User, Pizza } from "lucide-react";
 
 const WEBHOOK_URL = "https://hook.us2.make.com/849l4orc8rt4rtpk1ppt4p3sdbpxhswl";
 
@@ -23,6 +23,12 @@ function buildHistorico(messages: Message[]): string {
     .map((m) => (m.role === "user" ? `User: ${m.content}` : `AI: ${m.content}`))
     .join("\n");
 }
+
+const QUICK_REPLIES = [
+  "📋 Ver Cardápio",
+  "📦 Status do meu pedido",
+  "🛒 Fazer um pedido",
+];
 
 interface ChatViewProps {
   messages: Message[];
@@ -114,20 +120,20 @@ export default function ChatView({ messages, setMessages, input, setInput, onSta
       )}
 
       {/* Scrollable messages */}
-      <div className="flex-1 overflow-y-auto p-4 pb-24 md:pb-20 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 pb-36 md:pb-32 space-y-4">
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`flex items-start gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+            className={`flex items-start gap-3 animate-fade-in ${msg.role === "user" ? "flex-row-reverse" : ""}`}
           >
             <div
-              className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+              className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center shadow-md ${
                 msg.role === "assistant"
                   ? "bg-primary text-primary-foreground"
                   : "bg-secondary text-secondary-foreground"
               }`}
             >
-              {msg.role === "assistant" ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
+              {msg.role === "assistant" ? <Pizza className="w-4 h-4" /> : <User className="w-4 h-4" />}
             </div>
             <div
               className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
@@ -152,15 +158,15 @@ export default function ChatView({ messages, setMessages, input, setInput, onSta
           </div>
         ))}
         {isLoading && (
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-primary text-primary-foreground">
-              <Bot className="w-4 h-4" />
+          <div className="flex items-start gap-3 animate-fade-in">
+            <div className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-md">
+              <Pizza className="w-4 h-4" />
             </div>
-            <div className="bg-card border border-border rounded-2xl px-4 py-3 shadow-sm">
-              <span className="flex gap-1">
-                <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "300ms" }} />
+            <div className="bg-card border border-border rounded-2xl px-5 py-4 shadow-sm">
+              <span className="flex gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "300ms" }} />
               </span>
             </div>
           </div>
@@ -169,24 +175,36 @@ export default function ChatView({ messages, setMessages, input, setInput, onSta
       </div>
 
       {/* Fixed input at bottom */}
-      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-30 border-t border-border bg-card p-4">
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-30 border-t border-border bg-card/95 backdrop-blur-md shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        {/* Quick reply chips */}
+        <div className="flex gap-2 px-4 pt-3 pb-1 max-w-3xl mx-auto overflow-x-auto scrollbar-hide">
+          {QUICK_REPLIES.map((chip) => (
+            <button
+              key={chip}
+              onClick={() => setInput(chip)}
+              className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border border-border bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 shadow-sm"
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSend();
           }}
-          className="flex gap-2 max-w-3xl mx-auto"
+          className="flex gap-2 max-w-3xl mx-auto px-4 pb-4 pt-2"
         >
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Digite sua mensagem..."
-            className="flex-1 rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring transition-shadow"
+            className="flex-1 rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring transition-shadow shadow-sm"
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="rounded-xl bg-primary text-primary-foreground px-4 py-3 hover:opacity-90 transition-opacity disabled:opacity-40"
+            className="rounded-xl bg-primary text-primary-foreground px-4 py-3 hover:opacity-90 transition-all disabled:opacity-40 shadow-md hover:shadow-lg"
           >
             <Send className="w-4 h-4" />
           </button>
